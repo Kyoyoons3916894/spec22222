@@ -47,6 +47,16 @@ let waveAmb;    // wave (배경음으로 사용)
 let electromagneticAmb; // electromagnetic (배경음으로 사용)
 let explosionSnd; // explosion (클릭 시 효과음)
 
+// --- UI CONFIGURATION ---
+let isMuted = false;        // Trạng thái âm thanh
+const btnSize = 40;         // Kích thước nút
+const btnY = 20;            // Vị trí Y (cách lề trên)
+const btnSoundX = 20;       // Vị trí X nút Loa
+const btnInfoX = 70;        // Vị trí X nút Info
+
+// Biến âm thanh cho nút (nếu có)
+// let buttonSound;
+
 function preload() {
   bgm = loadSound('underwaterambience-sound.wav');
   whaleAmb = loadSound('whale-sound.wav');
@@ -118,7 +128,7 @@ function draw() {
     stroke(255, 255, 255);  
     strokeWeight(2);
   }
-  ellipse(centerX, centerY, 300, 300);
+  ellipse(centerX, centerY, 200, 200);
 
   // 유기체 루프
   for (let i = 0; i < orgs.length; i++) {
@@ -153,7 +163,7 @@ function draw() {
     noStroke();
     ellipse(o.x, o.y, (o.size + breath) * 0.25); 
   }
-  //From this to below is AI generated code
+
   // 선 수축 애니메이션
   let finishedLines = 0; 
   for (let i = 0; i < 16; i++) {
@@ -162,11 +172,11 @@ function draw() {
     if (isDirty == true) {
       if (currentL[i] > 100) currentL[i] = currentL[i] - 25; 
       else { currentL[i] = 100; finishedLines = finishedLines + 1; }
-      stroke(220, 30, 40, 180); 
+      stroke(255,255,255); 
       strokeWeight(3);   
     } else {
       if (currentL[i] < originL[i]) currentL[i] = currentL[i] + 5; 
-      stroke(220, 30, 40, 150); 
+      stroke(255, 255, 255, 150); 
       strokeWeight(1.5);         
       rippleGo = 0; 
     }
@@ -191,27 +201,146 @@ function draw() {
 
   if (timer > 0) timer = timer - 1;
   else isDirty = false; 
+
+  drawUI();
 }
 // ...
 function mousePressed() {
   if (getAudioContext().state !== 'running') {
     getAudioContext().resume();
   }
-//Ai generated code below
-  if (isDirty == false) { 
-    isDirty = true;
-    timer = 75; 
-    //
 
-    // 클릭 시에는 littering과 explosion 소리 재생
-    if (clickSnd.isLoaded()) {
-      clickSnd.play();
+  // Check UI buttons
+  if (mouseX > btnSoundX && mouseX < btnSoundX + btnSize && mouseY > btnY && mouseY < btnY + btnSize) {
+    isMuted = !isMuted;
+    // Toggle all sounds
+    if (isMuted) {
+      bgm.setVolume(0);
+      whaleAmb.setVolume(0);
+      beepAmb.setVolume(0);
+      bubbleAmb.setVolume(0);
+      constructionAmb.setVolume(0);
+      waveAmb.setVolume(0);
+      electromagneticAmb.setVolume(0);
+    } else {
+      bgm.setVolume(0.3);
+      whaleAmb.setVolume(0.1);
+      beepAmb.setVolume(0.15);
+      bubbleAmb.setVolume(0.1);
+      constructionAmb.setVolume(0.1);
+      waveAmb.setVolume(0.1);
+      electromagneticAmb.setVolume(0.1);
     }
-    if (explosionSnd.isLoaded()) {
-      explosionSnd.play();
-      explosionSnd.setVolume(0.1);
+  } else if (mouseX > btnInfoX && mouseX < btnInfoX + btnSize && mouseY > btnY && mouseY < btnY + btnSize) {
+    // Info button - no action needed, tooltip shows on hover
+  } else {
+    // Existing interaction
+    if (isDirty == false) { 
+      isDirty = true;
+      timer = 75; 
+      //
+
+      // 클릭 시에는 littering과 explosion 소리 재생
+      if (!isMuted) {
+        if (clickSnd.isLoaded()) {
+          clickSnd.play();
+        }
+        if (explosionSnd.isLoaded()) {
+          explosionSnd.play();
+          explosionSnd.setVolume(0.1);
+        }
+      }
     }
   }
+}
+
+function drawUI() {
+  push(); // Cô lập style để không ảnh hưởng bài chính
+  noStroke();
+
+  // --- VẼ NÚT SOUND ---
+  let isHoverSound =
+    mouseX > btnSoundX &&
+    mouseX < btnSoundX + btnSize &&
+    mouseY > btnY &&
+    mouseY < btnY + btnSize;
+    
+  // Nền nút
+  fill(isHoverSound ? 80 : 40, 200);
+  rect(btnSoundX, btnY, btnSize, btnSize, 8);
+  
+  // Icon Loa / Mute
+  fill(255);
+  if (isMuted) {
+    textAlign(CENTER, CENTER);
+    textSize(10);
+    textStyle(NORMAL);
+    text("MUTE", btnSoundX + btnSize / 2, btnY + btnSize / 2);
+    stroke(255, 0, 0);
+    strokeWeight(2);
+    line(btnSoundX + 5, btnY + 5, btnSoundX + btnSize - 5, btnY + btnSize - 5);
+  } else {
+    noStroke();
+    beginShape();
+    vertex(btnSoundX + 10, btnY + 14);
+    vertex(btnSoundX + 18, btnY + 14);
+    vertex(btnSoundX + 28, btnY + 8);
+    vertex(btnSoundX + 28, btnY + 32);
+    vertex(btnSoundX + 18, btnY + 26);
+    vertex(btnSoundX + 10, btnY + 26);
+    endShape(CLOSE);
+  }
+
+  // --- VẼ NÚT INFO ---
+  noStroke();
+  let isHoverInfo =
+    mouseX > btnInfoX &&
+    mouseX < btnInfoX + btnSize &&
+    mouseY > btnY &&
+    mouseY < btnY + btnSize;
+  
+  // Nền nút
+  fill(isHoverInfo ? 80 : 40, 200);
+  rect(btnInfoX, btnY, btnSize, btnSize, 8);
+  
+  // Chữ "i"
+  fill(255);
+  textAlign(CENTER, CENTER);
+  textSize(20);
+  textStyle(BOLD);
+  text("i", btnInfoX + btnSize / 2, btnY + btnSize / 2);
+
+  // Tooltip (Hiện bảng hướng dẫn khi rê chuột vào)
+  if (isHoverInfo) {
+    let tooltipX = mouseX + 15;
+    let tooltipY = mouseY + 15;
+    // Chặn tooltip tràn ra ngoài màn hình
+    if (tooltipX + 220 > width) tooltipX = width - 230;
+    
+    // Khung tooltip
+    fill(20, 240);
+    stroke(255, 100);
+    strokeWeight(1);
+    rect(tooltipX, tooltipY, 220, 90, 5);
+    
+    // Nội dung text
+    noStroke();
+    fill(255);
+    textAlign(LEFT, TOP);
+    textSize(12);
+    textStyle(NORMAL);
+    text("GUIDELINE:", tooltipX + 10, tooltipY + 10);
+    
+    textSize(11);
+    fill(200);
+    textLeading(18);
+    text(
+      "- Click : interaction 1.",
+      tooltipX + 10,
+      tooltipY + 30
+    );
+  }
+  pop();
 }
 
 function windowResized() {
